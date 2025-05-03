@@ -18,6 +18,8 @@ This project focuses on optimizing AWS costs by automating various cost-saving t
 - **S3 Storage Optimization**: Moves S3 objects older than 30 days to Glacier storage for cost reduction.
 - **Alerting Mechanism**: Sends notifications via AWS SNS for underutilized EC2 instances.
 
+![AWS-2](images/UI.png)
+![AWS-3](images/UI2.png)
 ## AWS Services Used
 - AWS Lambda
 - Amazon EC2

@@ -44,6 +44,7 @@ def delete_elastic_ip():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+
 @app.route('/api/ebs_snapshots', methods=['GET'])
 def get_ebs_snapshots():
     ec2 = boto3.client('ec2')
@@ -76,7 +77,13 @@ def get_ebs_snapshots():
                 if volume_response['Volumes']:
                     volume = volume_response['Volumes'][0]
                     if volume['Attachments']:
-                        snapshot_info['Status'] = 'In Use'
+                        # Check if the volume is attached to a running instance
+                        for attachment in volume['Attachments']:
+                            if attachment['InstanceId'] in active_instance_ids:
+                                snapshot_info['Status'] = 'In Use by Active Instance'
+                                break
+                        else:
+                            snapshot_info['Status'] = 'In Use by Inactive Instance'
                     else:
                         snapshot_info['Status'] = 'Volume Detached'
             except ec2.exceptions.ClientError:

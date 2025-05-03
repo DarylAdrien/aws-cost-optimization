@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AWS Cost Optimizer</title>
+    <link rel="stylesheet" href="../static/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-cloud"></i> AWS Cost Optimizer</h1>
+            <p>Monitor and optimize AWS resources to reduce costs</p>
+        </header>
+
+        <div class="filter-container">
+            <label for="service-filter">Filter by Service:</label>
+            <select id="service-filter">
+                <option value="all" selected>All Services</option>
+                <option value="ec2">EC2 Instances</option>
+                <option value="eip">Elastic IPs</option>
+                <option value="ebs">EBS Snapshots</option>
+                <option value="s3">S3 Storage</option>
+            </select>
+        </div>
+
+        <div class="cards-container">
+            <!-- Dashboard overview -->
+            <div class="card" id="overview-card">
+                <div class="card-header">
+                    <h2><i class="fas fa-tachometer-alt"></i> Dashboard Overview</h2>
+                </div>
+                <div class="card-body">
+                    <div class="stat-container">
+                        <div class="stat-item">
+                            <div class="stat-value" id="ec2-count">0</div>
+                            <div class="stat-label">Underutilized EC2</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="eip-count">0</div>
+                            <div class="stat-label">Unused Elastic IPs</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="snapshot-count">0</div>
+                            <div class="stat-label">Unused Snapshots</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="s3-count">0</div>
+                            <div class="stat-label">S3 Objects > 30 Days</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- EC2 Instances -->
+            <div class="card service-card" id="ec2-card" data-service="ec2">
+                <div class="card-header">
+                    <h2><i class="fas fa-server"></i> Underutilized EC2 Instances</h2>
+                    <button class="refresh-btn" onclick="loadEC2Instances()"><i class="fas fa-sync-alt"></i></button>
+                </div>
+                <div class="card-body">
+                    <div class="loading" id="ec2-loading">Loading...</div>
+                    <table id="ec2-table" class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Instance ID</th>
+                                <th>Name</th>
+                                <th>Type</th>
+                                <th>CPU Utilization</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                    <div class="empty-state" id="ec2-empty">No underutilized EC2 instances found.</div>
+                </div>
+            </div>
+
+            <!-- Elastic IPs -->
+            <div class="card service-card" id="eip-card" data-service="eip">
+                <div class="card-header">
+                    <h2><i class="fas fa-network-wired"></i> Unused Elastic IPs</h2>
+                    <button class="refresh-btn" onclick="loadElasticIPs()"><i class="fas fa-sync-alt"></i></button>
+                </div>
+                <div class="card-body">
+                    <div class="loading" id="eip-loading">Loading...</div>
+                    <table id="eip-table" class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Public IP</th>
+                                <th>Allocation ID</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                    <div class="empty-state" id="eip-empty">No unused Elastic IPs found.</div>
+                </div>
+            </div>
+
+            <!-- EBS Snapshots -->
+            <div class="card service-card" id="ebs-card" data-service="ebs">
+                <div class="card-header">
+                    <h2><i class="fas fa-hdd"></i> Unused EBS Snapshots</h2>
+                    <button class="refresh-btn" onclick="loadEBSSnapshots()"><i class="fas fa-sync-alt"></i></button>
+                </div>
+                <div class="card-body">
+                    <div class="loading" id="ebs-loading">Loading...</div>
+                    <table id="ebs-table" class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Snapshot ID</th>
+                                <th>Volume ID</th>
+                                <th>Size (GB)</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                    <div class="empty-state" id="ebs-empty">No unused EBS snapshots found.</div>
+                </div>
+            </div>
+
+            <!-- S3 Storage -->
+            <div class="card service-card" id="s3-card" data-service="s3">
+                <div class="card-header">
+                    <h2><i class="fas fa-database"></i> S3 Storage Optimization</h2>
+                    <button class="refresh-btn" onclick="loadS3Buckets()"><i class="fas fa-sync-alt"></i></button>
+                </div>
+                <div class="card-body">
+                    <div class="loading" id="s3-loading">Loading...</div>
+                    <div class="s3-container">
+                        <div class="s3-buckets">
+                            <h3>Buckets</h3>
+                            <ul id="s3-bucket-list"></ul> 
+                        </div>
+                        <div class="s3-objects">
+                            <h3>Objects <span id="selected-bucket"></span></h3>
+                            <table id="s3-table" class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Key</th>
+                                        <th>Size</th>
+                                        <th>Days Old</th>
+                                        <th>Storage Class</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                            <div class="empty-state" id="s3-empty">Select a bucket to view objects.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal" id="confirmation-modal">
+            <div class="modal-content">
+                <h3>Confirm Action</h3>
+                <p id="modal-message"></p>
+                <div class="modal-buttons">
+                    <button id="confirm-btn" class="btn btn-danger">Confirm</button>
+                    <button id="cancel-btn" class="btn">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../static/js/script.js"></script>
+</body>
+</html>
